@@ -14,6 +14,7 @@ const wss = new WebSocketServer({ server });
 
 app.use(express.json());
 app.use(express.static(path.join(__dirname, "public")));
+app.get("/", (req, res) => res.sendFile(path.join(__dirname, "index.html")));
 
 function broadcast(data) {
   const payload = JSON.stringify(data);
