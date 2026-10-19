@@ -1,0 +1,7 @@
+{
+  "prefix": ".",
+  "autoReply": {
+    "enabled": false,
+    "message": "Hello! Pineapple Bot is away. Type .help for commands."
+  }
+}

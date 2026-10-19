@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"><title>Pineapple Bot Panel</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-slate-900 text-white min-h-screen p-8">
+  <div class="max-w-4xl mx-auto space-y-6">
+    <header class="flex justify-between items-center border-b border-slate-700 pb-4">
+      <div>
+        <h1 class="text-2xl font-bold text-amber-400">🍍 Pineapple Bot Core</h1>
+        <p class="text-sm text-slate-400">Linux / Headless Chrome / Media Engines</p>
+      </div>
+      <span id="statusBadge" class="px-3 py-1 bg-red-600 rounded-full text-xs font-semibold uppercase">Disconnected</span>
+    </header>
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div class="bg-slate-800 p-6 rounded-xl border border-slate-700 flex flex-col items-center">
+        <h2 class="text-lg font-semibold mb-4">Device Authentication</h2>
+        <div id="qrContainer" class="w-64 h-64 bg-slate-700 flex items-center justify-center rounded-lg border border-dashed border-slate-500">
+          <p id="qrText" class="text-sm text-slate-400">Waiting for QR...</p>
+          <img id="qrImage" class="hidden w-full h-full object-contain p-2" />
+        </div>
+      </div>
+      <div class="bg-slate-800 p-6 rounded-xl border border-slate-700 space-y-4">
+        <h2 class="text-lg font-semibold">Bot Configuration</h2>
+        <div>
+          <label class="block text-sm text-slate-400 mb-1">Prefix</label>
+          <input type="text" id="prefix" class="w-full bg-slate-900 border border-slate-700 rounded px-3 py-2 text-sm" />
+        </div>
+        <div class="flex items-center space-x-3">
+          <input type="checkbox" id="autoReplyToggle" class="w-4 h-4 rounded bg-slate-900" />
+          <label for="autoReplyToggle" class="text-sm">Enable Auto-Reply</label>
+        </div>
+        <div>
+          <label class="block text-sm text-slate-400 mb-1">Auto-Reply Text</label>
+          <textarea id="autoReplyMsg" rows="3" class="w-full bg-slate-900 border border-slate-700 rounded px-3 py-2 text-sm"></textarea>
+        </div>
+        <button onclick="saveConfig()" class="w-full bg-amber-500 hover:bg-amber-600 text-black font-semibold py-2 rounded">Save Settings</button>
+      </div>
+    </div>
+  </div>
+  <script>
+    const ws = new WebSocket(`${location.protocol === "https:" ? "wss:" : "ws:"}//${location.host}`);
+    let config = {};
+    ws.onmessage = (event) => {
+      const data = JSON.parse(event.data);
+      if (data.type === "init") { updateStatus(data.status); if (data.qr) showQr(data.qr); loadConfig(data.config); }
+      else if (data.type === "status") updateStatus(data.status);
+      else if (data.type === "qr") showQr(data.qr);
+    };
+    function updateStatus(status) {
+      const badge = document.getElementById("statusBadge");
+      badge.textContent = status;
+      badge.className = status === "Connected" ? "px-3 py-1 bg-emerald-600 rounded-full text-xs font-semibold uppercase" : "px-3 py-1 bg-red-600 rounded-full text-xs font-semibold uppercase";
+      if (status === "Connected") document.getElementById("qrContainer").innerHTML = '<p class="text-emerald-400 font-semibold">Bot Active & Linked</p>';
+    }
+    function showQr(b64) {
+      const img = document.getElementById("qrImage");
+      img.src = b64; img.classList.remove("hidden");
+      document.getElementById("qrText").classList.add("hidden");
+    }
+    function loadConfig(cfg) {
+      config = cfg;
+      document.getElementById("prefix").value = cfg.prefix;
+      document.getElementById("autoReplyToggle").checked = cfg.autoReply.enabled;
+      document.getElementById("autoReplyMsg").value = cfg.autoReply.message;
+    }
+    async function saveConfig() {
+      config.prefix = document.getElementById("prefix").value;
+      config.autoReply.enabled = document.getElementById("autoReplyToggle").checked;
+      config.autoReply.message = document.getElementById("autoReplyMsg").value;
+      await fetch("/api/config", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(config) });
+      alert("Settings saved!");
+    }
+  </script>
+</body>
+</html>
