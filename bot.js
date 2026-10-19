@@ -2,7 +2,7 @@ import makeWASocket, { useMultiFileAuthState, DisconnectReason } from "@whiskeys
 import pino from "pino";
 import QRCode from "qrcode";
 import fs from "fs";
-import { routeCommand } from "./commands/index.js";
+import { routeCommand } from "./index.js";
 
 let sock = null;
 let latestQrBase64 = null;
